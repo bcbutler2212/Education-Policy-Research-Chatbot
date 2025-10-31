@@ -4,3 +4,4 @@ langchain-ollama
 chromadb
 pypdf
 pandas
+pysqlite3-binary
