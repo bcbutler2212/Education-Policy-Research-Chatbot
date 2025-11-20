@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 try:
     __import__('pysqlite3')
     import sys
@@ -6,10 +8,14 @@ except ModuleNotFoundError:
     # Fallback to system sqlite3 if pysqlite3 is not available
     pass
 
+# Disable chromadb telemetry
+import os
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY_DISABLED"] = "True"
 
 from langchain_ollama import ChatOllama
 from langchain_ollama import OllamaEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from chromadb.config import Settings
 from langchain_core.prompts import PromptTemplate
 from langchain.chains import create_retrieval_chain
@@ -27,7 +33,18 @@ def main():
         embedding_function=OllamaEmbeddings(model=EMBED_MODEL),
         client_settings=Settings(anonymized_telemetry=False)
     )
-    retriever = db.as_retriever()
+    # Verify database has documents
+    doc_count = db._collection.count()
+    print(f"Database contains {doc_count} documents")
+    
+    if doc_count == 0:
+        print("WARNING: Database is empty! Make sure you've run ingest.py first.")
+        return
+
+    retriever = db.as_retriever(
+        search_type="similarity",
+        search_kwargs={"k": 4}  # Retrieve top 4 most similar documents
+    )
 
     llm = ChatOllama(model=LLM_MODEL, temperature=0.2)
 
