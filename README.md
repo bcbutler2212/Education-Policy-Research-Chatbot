@@ -2,5 +2,12 @@
 
 First, download the requirments from requirments.txt
 
-This model RAG system contains data from the MLB, which will take some time to load.
+run pip install -r requirments.txt
+
+This model RAG system contains data from a CSV that contains MLB data.
+
+Once requriments are downloaded, start chatting with the bot by running:
+
+python3 query.py
+
 
