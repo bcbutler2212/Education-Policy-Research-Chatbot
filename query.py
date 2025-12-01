@@ -1,3 +1,16 @@
+'''
+import sys
+import os
+
+print("--- DEBUG INFO ---")
+print(f"Current Working Dir: {os.getcwd()}")
+print(f"Python Executable: {sys.executable}")
+print("System Path (in order):")
+for p in sys.path:
+    print(f"  - {p}")
+print("------------------")
+# ... your imports
+'''
 from __future__ import annotations
 
 try:
@@ -18,8 +31,8 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from chromadb.config import Settings
 from langchain_core.prompts import PromptTemplate
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 
 
 DB_PATH = "db"
