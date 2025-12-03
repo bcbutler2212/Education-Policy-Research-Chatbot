@@ -13,7 +13,7 @@ import os
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
 os.environ["CHROMA_TELEMETRY_DISABLED"] = "True"
 
-from langchain_community.document_loaders import DirectoryLoader, CSVLoader
+from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
@@ -24,7 +24,7 @@ DOCS_PATH = "docs"
 DB_PATH = "db"
 
 def main():
-    loader = DirectoryLoader(DOCS_PATH, glob="**/*.csv", loader_cls=CSVLoader)
+    loader = DirectoryLoader(DOCS_PATH, glob="./*.pdf",loader_cls= PyPDFLoader)
     documents = loader.load()
     print(f"Loaded {len(documents)} documents")
 

@@ -36,7 +36,7 @@ from langchain_classic.chains.combine_documents import create_stuff_documents_ch
 
 
 DB_PATH = "db"
-LLM_MODEL = "mistral"
+LLM_MODEL = "llama3.1"
 EMBED_MODEL = "nomic-embed-text"
 
 def main():
