@@ -30,9 +30,15 @@ from langchain_ollama import ChatOllama
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from chromadb.config import Settings
-from langchain_core.prompts import PromptTemplate
-from langchain_classic.chains import create_retrieval_chain
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+
+from langchain_core.prompts import PromptTemplate # charlie
+from langchain_classic.chains import create_retrieval_chain # charlie
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain # charlie
+
+
+# from langchain.prompts import PromptTemplate
+# from langchain.chains import create_retrieval_chain
+# from langchain.chains.combine_documents import create_stuff_documents_chain
 
 
 DB_PATH = "db"

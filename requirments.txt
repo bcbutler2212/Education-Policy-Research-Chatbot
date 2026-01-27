@@ -6,4 +6,3 @@ langchain-text-splitters
 langchain-classic 
 chromadb
 pypdf
-pysqlite3-binary
