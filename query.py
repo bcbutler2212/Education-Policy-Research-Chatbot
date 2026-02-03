@@ -26,10 +26,17 @@ import os
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
 os.environ["CHROMA_TELEMETRY_DISABLED"] = "True"
 
-from langchain_ollama import ChatOllama
-from langchain_ollama import OllamaEmbeddings
+# from langchain_ollama import ChatOllama
+# from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from chromadb.config import Settings
+
+# added for claude
+#from langchain_anthropic import ChatAnthropic
+#from langchain_community.chat_models import ChatAnthropic
+#from langchain_classic.embeddings import SentenceTransformerEmbeddings
+#from langchain_ollama import ChatOllama
+from langchain_ollama import OllamaEmbeddings
 
 from langchain_core.prompts import PromptTemplate # charlie
 from langchain_classic.chains import create_retrieval_chain # charlie
@@ -42,14 +49,76 @@ from langchain_classic.chains.combine_documents import create_stuff_documents_ch
 
 
 DB_PATH = "db"
-LLM_MODEL = "llama3.1"
+# LLM_MODEL = "llama3.1"
+# EMBED_MODEL = ""hkunlp/instructor-large"
+
+LLM_MODEL = "claude-sonnet-4-5-20250929"
 EMBED_MODEL = "nomic-embed-text"
+
+# ---------------------------------------------------------
+# CUSTOM CLAUDE 3 LLM WRAPPER (Python 3.12 compatible)
+# ---------------------------------------------------------
+import os
+import requests
+
+
+
+
+class ClaudeLLM:
+    def __init__(self, model, temperature=0.2, max_tokens=1024):
+        self.model = model
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+
+        # Use your local environment variable automatically
+        self.api_key = os.getenv("ANTHROPIC_API_KEY")
+
+        if not self.api_key:
+            raise ValueError(
+                "Missing ANTHROPIC_API_KEY environment variable. "
+                "Set it locally before running the script."
+            )
+
+    def __call__(self, prompt, **kwargs):
+        """Allows LangChain Classic to treat this like an LLM."""
+        if hasattr(prompt, "to_string"):
+            prompt = prompt.to_string()
+        else:
+            prompt = str(prompt)
+        return self._generate(prompt)
+
+    def _generate(self, prompt):
+        url = "https://api.anthropic.com/v1/messages"
+
+        headers = {
+            "x-api-key": self.api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json"
+        }
+
+        payload = {
+            "model": self.model,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
+        }
+
+        response = requests.post(url, headers=headers, json=payload)
+        data = response.json()
+
+        # Extract Claude's text response safely
+        try:
+            return data["content"][0]["text"]
+        except Exception:
+            return str(data)
 
 def main():
     # Load DB with the same embedding model used during ingest
     db = Chroma(
         persist_directory=DB_PATH,
-        embedding_function=OllamaEmbeddings(model=EMBED_MODEL),
+        embedding_function=OllamaEmbeddings(model=EMBED_MODEL), #changed 
         client_settings=Settings(anonymized_telemetry=False)
     )
     # Verify database has documents
@@ -65,7 +134,13 @@ def main():
         search_kwargs={"k": 4}  # Retrieve top 4 most similar documents
     )
 
-    llm = ChatOllama(model=LLM_MODEL, temperature=0.2)
+    #llm = ChatOllama(model=LLM_MODEL, temperature=0.2) # old model 
+    #anthropic model 
+    llm = ClaudeLLM(
+        model=LLM_MODEL,
+        temperature=0.2,
+        max_tokens=1024
+    )
 
     prompt = PromptTemplate(
         input_variables=["context", "input"],

@@ -6,3 +6,5 @@ langchain-text-splitters
 langchain-classic 
 chromadb
 pypdf
+langchain-anthropic
+
