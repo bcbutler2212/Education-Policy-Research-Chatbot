@@ -27,19 +27,30 @@ def main():
     loader = DirectoryLoader(DOCS_PATH, glob="./*.pdf",loader_cls= PyPDFLoader)
     documents = loader.load()
     print(f"Loaded {len(documents)} documents")
+       
 
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=700, chunk_overlap=100) # change chunk sizes here 
     chunks = text_splitter.split_documents(documents)
     print(f"Split into {len(chunks)} chunks")
+     
+    # citations 
+    for chunk in chunks:
+        filename = os.path.basename(chunk.metadata.get("source", ""))
+        chunk.metadata["citation"] = filename
+    
+
 
     embeddings = OllamaEmbeddings(model="nomic-embed-text")
     db = Chroma(
+        collection_name="new_collection",
         embedding_function=embeddings,
         persist_directory=DB_PATH,
         client_settings=Settings(anonymized_telemetry=False)
     )
+    
 
-    batch_size = 10000
+
+    batch_size = 500 # 10000 previously 
     for start in range(0, len(chunks), batch_size):
         end = start + batch_size
         batch = chunks[start:end]

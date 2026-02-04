@@ -117,6 +117,7 @@ class ClaudeLLM:
 def main():
     # Load DB with the same embedding model used during ingest
     db = Chroma(
+        collection_name="new_collection",
         persist_directory=DB_PATH,
         embedding_function=OllamaEmbeddings(model=EMBED_MODEL), #changed 
         client_settings=Settings(anonymized_telemetry=False)
@@ -150,14 +151,47 @@ def main():
             "Context:\n{context}\n\nQuestion: {input}"
         ),
     )
-    document_chain = create_stuff_documents_chain(llm, prompt)
+
+    document_prompt = PromptTemplate(
+        input_var = ["page_content", "citation"], 
+        template= "{page_content}\n[Citation: {citation}]"
+    )
+
+    document_chain = create_stuff_documents_chain(llm, prompt, document_prompt=document_prompt)
     rag_chain = create_retrieval_chain(retriever, document_chain)
 
     import sys
-    question = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else input("Question: ")
-    result = rag_chain.invoke({"input": question})
-    answer = result.get("answer") or result.get("result") or str(result)
-    print(answer)
+   
+
+    print("\nType your questions below. Type 'exit', 'quit', or q to stop.\n")
+    while True:
+        question = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else input("Question: ")
+        question = question.strip()
+        if question.lower() in ("exit", "quit", "q"):
+            print("goodbye!")
+            break
+        if not question: 
+            continue
+
+        result = rag_chain.invoke({"input": question})
+
+        docs = result.get("context", []) # below prints sources 
+
+        unique_files = set()
+        for d in docs:
+            citation= d.metadata.get("citation")
+            if citation:
+                unique_files.add(citation)
+
+        print("\n--- Sources Used ---")
+        for filename in sorted(unique_files):
+            print(filename)
+        print("--------------------\n")
+
+        answer = result.get("answer") or result.get("result") or str(result)
+        print("Answer:")
+        print(answer)
+        print("\n")
 
 if __name__ == "__main__":
     main()
