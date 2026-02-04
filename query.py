@@ -163,35 +163,35 @@ def main():
     import sys
    
 
-    print("\nType your questions below. Type 'exit', 'quit', or q to stop.\n")
-    while True:
-        question = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else input("Question: ")
-        question = question.strip()
-        if question.lower() in ("exit", "quit", "q"):
-            print("goodbye!")
-            break
-        if not question: 
-            continue
+    #print("\nType your questions below. Type 'exit', 'quit', or q to stop.\n")
+    
+    question = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else input("Question: ")
+    question = question.strip()
+    # if question.lower() in ("exit", "quit", "q"):
+    #     print("goodbye!")
+    #     break
+    # if not question: 
+    #     continue
 
-        result = rag_chain.invoke({"input": question})
+    result = rag_chain.invoke({"input": question})
 
-        docs = result.get("context", []) # below prints sources 
+    docs = result.get("context", []) # below prints sources 
 
-        unique_files = set()
-        for d in docs:
-            citation= d.metadata.get("citation")
-            if citation:
-                unique_files.add(citation)
+    unique_files = set()
+    for d in docs:
+        citation= d.metadata.get("citation")
+        if citation:
+            unique_files.add(citation)
 
-        print("\n--- Sources Used ---")
-        for filename in sorted(unique_files):
-            print(filename)
-        print("--------------------\n")
+    print("\n--- Sources Used ---")
+    for filename in sorted(unique_files):
+        print(filename)
+    print("--------------------\n")
 
-        answer = result.get("answer") or result.get("result") or str(result)
-        print("Answer:")
-        print(answer)
-        print("\n")
+    answer = result.get("answer") or result.get("result") or str(result)
+    print("Answer:")
+    print(answer)
+    print("\n")
 
 if __name__ == "__main__":
     main()
