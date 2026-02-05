@@ -1,0 +1,10 @@
+langchain
+langchain-chroma
+langchain-community
+langchain-ollama
+langchain-text-splitters
+langchain-classic 
+chromadb
+pypdf
+langchain-anthropic
+gradio
