@@ -1,0 +1,6 @@
+myenv_stable/
+sofia/
+__pycache__/
+.git/
+db/
+docs/
