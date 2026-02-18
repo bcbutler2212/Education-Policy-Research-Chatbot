@@ -29,7 +29,9 @@ python3 query.py
 **Work Needed**
 - Proper citation for the responses --> need to know if its pulling the right text in addition to the correct documents 
 - Memory for the chatbot so that you can continue a conversation
-- Play around with chunk size to see if that changes accuracy of responses
-- Integrate better LLM 
+- Play around with chunk size to see if that changes accuracy of responses 
 - Play around with metaprompt (in query.py) to see how that changes quality of responses.
+
+**Work needed 2/4**
+- include history in UI and in query
 

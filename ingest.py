@@ -28,7 +28,7 @@ def main():
     documents = loader.load()
     print(f"Loaded {len(documents)} documents")
        
-
+    # CHANGE ME ***
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=700, chunk_overlap=100) # change chunk sizes here 
     chunks = text_splitter.split_documents(documents)
     print(f"Split into {len(chunks)} chunks")

@@ -113,6 +113,46 @@ class ClaudeLLM:
             return data["content"][0]["text"]
         except Exception:
             return str(data)
+        
+# add function to strip headers DEBUG THIS ********
+def strip_head(text):
+    if not isinstance(text, str):
+        return ""
+
+    cleaned_lines = []
+    heading_patterns = [
+        r"^#{1,6}\s+.*$",                 # Markdown headings: #, ##, ###
+        r"^[A-Z][A-Z\s]{3,}$",            # ALL CAPS headings
+        r"^Key finding.*$",               # Key finding #1:
+        r"^[A-Za-z ]{1,40}:$",            # Short label ending with colon
+        r"^Chapter\s+\d+.*$",             # Chapter 1
+        r"^Section\s+\d+.*$",             # Section 2.1
+        r"^\d+\.\s+.*$",                  # 1. Heading
+        r"^\d+\.\d+\s+.*$",               # 1.1 Subheading
+        r"^Policy background$",           # Specific headings in your docs
+        r"^Evidence$",
+    ]
+    footer_patterns = [
+        r"^<!--.*-->$",                   # HTML comments (PageFooter, PageNumber)
+        r"^<figure>$",                    # Figure tags
+        r"^Live handbook$",               # Figure text
+        r"^AEFP$",                        # Figure text
+    ]
+    for line in text.splitlines():
+        stripped = line.strip()
+
+        # Skip headings
+        if any(re.match(p, stripped) for p in heading_patterns):
+            continue
+
+        # Skip footers / page numbers / figure junk
+        if any(re.match(p, stripped) for p in footer_patterns):
+            continue
+
+        cleaned_lines.append(line)
+
+    return "\n".join(cleaned_lines).strip()
+
 
 def main():
     # Load DB with the same embedding model used during ingest
@@ -143,18 +183,65 @@ def main():
         max_tokens=1024
     )
 
+    """ 
+    ideas for prompts: 
+    - previous/ original = 
+    "You are a helpful assistant. Use the provided context to answer the question.\n"
+            "If the answer is not in the context, say you don't know.\n\n"
+
+            "Context:\n{context}\n\nQuestion: {input}"
+    """
     prompt = PromptTemplate(
         input_variables=["context", "input"],
         template=(
-            "You are a helpful assistant. Use the provided context to answer the question.\n"
-            "If the answer is not in the context, say you don't know.\n\n"
-            "Context:\n{context}\n\nQuestion: {input}"
+          """You are a specialized assistant that answers questions using ONLY the provided CONTEXT_EXCERPTS.
+
+            Your goals:
+            - Give a clear, helpful answer grounded in the excerpts.
+            - Synthesize across multiple excerpts when relevant.
+            - Be concise, accurate, and easy to read.
+
+
+            Rules:
+            - Do not introduce facts that are not supported by the excerpts.
+            - If the excerpts do not contain enough information, say:
+            "The provided excerpts do not contain information about: <topic>."
+            Then suggest 1–3 specific things to search for or provide next.
+            - If excerpts conflict, briefly describe the conflict and reflect both sides.
+            - Avoid long quotes. Only quote short phrases when necessary.
+
+
+            Output format (always follow):
+
+
+            Response
+            1–3 sentences answering the question directly.
+
+
+            Key details
+            - 3–6 short bullets that support or expand the response.
+
+
+            Sources
+            - List the exact source/citation lines that appear in the excerpts that you relied on.
+            - Do not add commentary here, just the lines.
+
+
+            CONTEXT_EXCERPTS:
+            {context}
+
+
+            USER_QUESTION:
+            {input}
+
+            """
         ),
     )
 
     document_prompt = PromptTemplate(
-        input_var = ["page_content", "citation"], 
-        template= "{page_content}\n[Citation: {citation}]"
+        input_var = ["page_content", "citation", "file_link"], 
+        template= "{page_content}\n"
+        "[Source: {citation}]"
     )
 
     document_chain = create_stuff_documents_chain(llm, prompt, document_prompt=document_prompt)
@@ -178,14 +265,34 @@ def main():
     docs = result.get("context", []) # below prints sources 
 
     unique_files = set()
-    for d in docs:
+    # for d in docs: 
+    #     citation= d.metadata.get("citation")
+    #     if citation:
+    #         unique_files.add(citation)
+    
+    print("\n--- Retrieved Chunks---") # citation and chunks
+    for i, d in enumerate(docs, start=1):
+        #d.page_content = strip_head(d.page_content) # clean up chunks 
+
         citation= d.metadata.get("citation")
         if citation:
             unique_files.add(citation)
 
+        source_path = d.metadata.get("source", "")
+        filename = os.path.basename(source_path)
+
+        print(f"\nChunk {i}:")
+        print(f"File: {filename}")
+        print("Content:")
+        print(d.page_content)
+        print("-" * 40)
+    print("------------------------\n")
+
+
     print("\n--- Sources Used ---")
     for filename in sorted(unique_files):
         print(filename)
+        print()
     print("--------------------\n")
 
     answer = result.get("answer") or result.get("result") or str(result)
