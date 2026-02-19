@@ -1,28 +1,14 @@
 <<<<<<< HEAD
 **Getting Started**
-I highly recommend using python's venv to run the query.py program. This makes sure that you won't have any version discrepancies.
 
-Additionally, this program was built to run on Python 3.12. If your computer isn't on this version of python, then you <u>must</u> run using venv
-
-<b>Note</b>: this may be easier using the "uv" package for python, the documentation for that is : https://docs.astral.sh/uv/getting-started/installation/#standalone-installer
-
-You can use "uv" to create a standalone python version that you venv can use. The command I used is : "uv venv --python 3.12 myenv"
-
-*Setting up venv*
-run python -m venv <u>name</u>
-next: source <u>name</u>/bin/activate
-
-Next, download the requirments from requirments.txt
-
-run pip install -r requirments.txt
-
-Once requriments are downloaded, start chatting with the bot by running:
-
-python3 query.py
-
+- We are using Docker, a service that allows us to all work from the same system environment.
+- In order to do this, first download docker onto your machine. You can either do the gui (application with graphics) or just the cli version (in terminal). I did the cli but it shouldn't make a difference
+- run this command so that you don't use sudo everytime you run docker: sudo usermod -aG docker $USER
+- then run this command: docker education-chatbot
+- when you are done with the container, grab the id of the container using docker ps -a and then copy that id and run docker stop [id]
 
 **Common Errors**
--If you are getting an error that says Ollama isn't running (or some variation of that), then you need to install run : sudo systmctl start ollama
+-If you are getting an error that says Ollama isn't running (or some variation of that), then you need to install run : ollama serve
 
 -If query.py doesn't say that there are any documents that are in the database, then you need to run "python ingest.py"
 
@@ -34,4 +20,3 @@ python3 query.py
 - Integrate better LLM 
 - Play around with metaprompt (in query.py) to see how that changes quality of responses.
 
->>>>>>> Charlie
