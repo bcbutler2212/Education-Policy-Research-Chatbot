@@ -20,6 +20,35 @@ from langchain_chroma import Chroma
 from chromadb.config import Settings
 
 
+
+
+def strip_header_lines(text: str, page_number: str): 
+    if page_number != '1':
+        lines = text.split("\n")
+        cleaned = []
+        removed = 0
+
+        for line in lines:
+            if removed < 2 and line.strip() != "":
+                removed += 1
+                continue
+            cleaned.append(line)
+
+        return "\n".join(cleaned)
+
+
+    lower_text = text.lower()
+    intro_index = lower_text.find("introduction")
+
+    # If "introduction" isn't found, return the text unchanged
+    if intro_index == -1:
+        return text
+
+    # Keep everything starting from the word "Introduction"
+    return text[intro_index:]
+
+
+
 DOCS_PATH = "docs"
 DB_PATH = "db"
 
@@ -27,18 +56,41 @@ def main():
     loader = DirectoryLoader(DOCS_PATH, glob="./*.pdf",loader_cls= PyPDFLoader)
     documents = loader.load()
     print(f"Loaded {len(documents)} documents")
-       
-    # CHANGE ME ***
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=700, chunk_overlap=100) # change chunk sizes here 
+
+    for doc in documents:
+        page_number = doc.metadata.get("page_label", None)
+
+        doc.page_content = strip_header_lines(
+            doc.page_content,
+            page_number=page_number
+        )
+        
+   
+
+
+    custom_separators = [
+        ". ",
+        "? ",
+        "! ",
+    ]
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=120,
+        separators=custom_separators,
+        keep_separator=False
+        )
+    
+    
     chunks = text_splitter.split_documents(documents)
+
     print(f"Split into {len(chunks)} chunks")
-     
+
     # citations 
     for chunk in chunks:
         filename = os.path.basename(chunk.metadata.get("source", ""))
         chunk.metadata["citation"] = filename
     
-
+   
 
     embeddings = OllamaEmbeddings(model="nomic-embed-text")
     db = Chroma(
@@ -50,7 +102,7 @@ def main():
     
 
 
-    batch_size = 500 # 10000 previously 
+    batch_size = 128 # 10000 previously 
     for start in range(0, len(chunks), batch_size):
         end = start + batch_size
         batch = chunks[start:end]
@@ -60,10 +112,13 @@ def main():
     # Chroma persists automatically, but we can verify the collection
     print(f"Total documents in database: {db._collection.count()}")
     print("Saved to disk")
+    
+  
 
-
-
-
+    for i, chunk in enumerate(chunks[:10]):
+        print(f"\n--- Chunk {i+1} ---")
+        print(chunk.page_content)
+        print("-------------------")
 
 
 

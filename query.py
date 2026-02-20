@@ -42,7 +42,6 @@ from langchain_core.prompts import PromptTemplate # charlie
 from langchain_classic.chains import create_retrieval_chain # charlie
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain # charlie
 
-
 # from langchain.prompts import PromptTemplate
 # from langchain.chains import create_retrieval_chain
 # from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -115,44 +114,6 @@ class ClaudeLLM:
             return str(data)
         
 # add function to strip headers DEBUG THIS ********
-def strip_head(text):
-    if not isinstance(text, str):
-        return ""
-
-    cleaned_lines = []
-    heading_patterns = [
-        r"^#{1,6}\s+.*$",                 # Markdown headings: #, ##, ###
-        r"^[A-Z][A-Z\s]{3,}$",            # ALL CAPS headings
-        r"^Key finding.*$",               # Key finding #1:
-        r"^[A-Za-z ]{1,40}:$",            # Short label ending with colon
-        r"^Chapter\s+\d+.*$",             # Chapter 1
-        r"^Section\s+\d+.*$",             # Section 2.1
-        r"^\d+\.\s+.*$",                  # 1. Heading
-        r"^\d+\.\d+\s+.*$",               # 1.1 Subheading
-        r"^Policy background$",           # Specific headings in your docs
-        r"^Evidence$",
-    ]
-    footer_patterns = [
-        r"^<!--.*-->$",                   # HTML comments (PageFooter, PageNumber)
-        r"^<figure>$",                    # Figure tags
-        r"^Live handbook$",               # Figure text
-        r"^AEFP$",                        # Figure text
-    ]
-    for line in text.splitlines():
-        stripped = line.strip()
-
-        # Skip headings
-        if any(re.match(p, stripped) for p in heading_patterns):
-            continue
-
-        # Skip footers / page numbers / figure junk
-        if any(re.match(p, stripped) for p in footer_patterns):
-            continue
-
-        cleaned_lines.append(line)
-
-    return "\n".join(cleaned_lines).strip()
-
 
 def main():
     # Load DB with the same embedding model used during ingest
@@ -272,7 +233,6 @@ def main():
     
     print("\n--- Retrieved Chunks---") # citation and chunks
     for i, d in enumerate(docs, start=1):
-        #d.page_content = strip_head(d.page_content) # clean up chunks 
 
         citation= d.metadata.get("citation")
         if citation:
