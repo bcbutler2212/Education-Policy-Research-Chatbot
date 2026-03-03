@@ -19,7 +19,28 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from chromadb.config import Settings
 
+from azure.cosmos import CosmosClient, PartitionKey
+import uuid
 
+# add cosmos info below 
+COSMOS_ENDPOINT = os.getenv("COSMOS_ENDPOINT")
+COSMOS_KEY = os.getenv("COSMOS_KEY")
+DATABASE_NAME = os.getenv("COSMOS_DATABASE", "rag-db")
+CONTAINER_NAME = os.getenv("COSMOS_CONTAINER", "chunks")
+
+if not COSMOS_ENDPOINT or not COSMOS_KEY:
+    raise ValueError("Cosmos DB credentials not set in environment variables.")
+
+# initializing cosmos below 
+client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
+
+database = client.create_database_if_not_exists(id=DATABASE_NAME)
+
+container = database.create_container_if_not_exists(
+    id=CONTAINER_NAME,
+    partition_key=PartitionKey(path="/source"),
+    offer_throughput=400
+)
 
 
 def strip_header_lines(text: str, page_number: str): 
@@ -50,7 +71,7 @@ def strip_header_lines(text: str, page_number: str):
 
 
 DOCS_PATH = "docs"
-DB_PATH = "db"
+
 
 def main():
     loader = DirectoryLoader(DOCS_PATH, glob="./*.pdf",loader_cls= PyPDFLoader)
@@ -82,6 +103,7 @@ def main():
     
     
     chunks = text_splitter.split_documents(documents)
+    
 
     print(f"Split into {len(chunks)} chunks")
 
@@ -93,32 +115,51 @@ def main():
    
 
     embeddings = OllamaEmbeddings(model="nomic-embed-text")
-    db = Chroma(
-        collection_name="new_collection",
-        embedding_function=embeddings,
-        persist_directory=DB_PATH,
-        client_settings=Settings(anonymized_telemetry=False)
-    )
+    
+    
+    # new db here ***
+    # db = Chroma(
+    #     collection_name="new_collection",
+    #     embedding_function=embeddings,
+    #     persist_directory=DB_PATH,
+    #     client_settings=Settings(anonymized_telemetry=False)
+    # )
+    batch_size = 128 # 10000 previously 
+
+    # cosmos db below 
+
+
     
 
 
-    batch_size = 128 # 10000 previously 
+   
     for start in range(0, len(chunks), batch_size):
         end = start + batch_size
         batch = chunks[start:end]
-        db.add_documents(batch)
-        print(f"Upserted {min(end, len(chunks))}/{len(chunks)}")
+        # Change me below *** perhaps ??? look at documentation 
+        #db.add_documents(batch)
+        for chunk in batch:
+            embedding = embeddings.embed_query(chunk.page_content)
 
-    # Chroma persists automatically, but we can verify the collection
-    print(f"Total documents in database: {db._collection.count()}")
-    print("Saved to disk")
+            # this format needed for cosmos db 
+            item = {
+            "id": str(uuid.uuid4()), # unsure if I should change ids to include metadata info for citations 
+            "content": chunk.page_content,
+            "embedding": embedding,
+            "source": chunk.metadata.get("source"),
+            "citation": chunk.metadata.get("citation"),
+            "page": chunk.metadata.get("page_label")
+                }
+            container.upsert_item(item) #overwrites
+
+        print(f"Upserted {min(end, len(chunks))}/{len(chunks)}")
     
   
 
-    for i, chunk in enumerate(chunks[:10]):
-        print(f"\n--- Chunk {i+1} ---")
-        print(chunk.page_content)
-        print("-------------------")
+    # for i, chunk in enumerate(chunks[:10]):
+    #     print(f"\n--- Chunk {i+1} ---")
+    #     print(chunk.page_content)
+    #     print("-------------------")
 
 
 

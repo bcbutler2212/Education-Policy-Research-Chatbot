@@ -41,29 +41,108 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_core.prompts import PromptTemplate # charlie
 from langchain_classic.chains import create_retrieval_chain # charlie
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain # charlie
-
-# from langchain.prompts import PromptTemplate
-# from langchain.chains import create_retrieval_chain
-# from langchain.chains.combine_documents import create_stuff_documents_chain
+from azure.cosmos import CosmosClient
 
 
-DB_PATH = "db"
-# LLM_MODEL = "llama3.1"
-# EMBED_MODEL = ""hkunlp/instructor-large"
+from langchain_core.documents import Document
+from langchain_core.retrievers import BaseRetriever
+from pydantic import Field
+from typing import Any
+import asyncio
+
+
+
+# add cosmos info below 
+COSMOS_ENDPOINT = os.getenv("COSMOS_ENDPOINT")
+COSMOS_KEY = os.getenv("COSMOS_KEY")
+DATABASE_NAME = os.getenv("COSMOS_DATABASE", "rag-db")
+CONTAINER_NAME = os.getenv("COSMOS_CONTAINER", "chunks")
+
+if not COSMOS_ENDPOINT or not COSMOS_KEY:
+    raise ValueError("Cosmos DB credentials not set in environment variables.")
+
+def get_cosmos_container():
+    # Connects to Cosmos DB and returns container client.
+    
+    client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
+    database = client.get_database_client(DATABASE_NAME)
+    container = database.get_container_client(CONTAINER_NAME)
+    return container
+
+#DB_PATH = "db"
+
 
 LLM_MODEL = "claude-sonnet-4-5-20250929"
 EMBED_MODEL = "nomic-embed-text"
 
-# ---------------------------------------------------------
-# CUSTOM CLAUDE 3 LLM WRAPPER (Python 3.12 compatible)
-# ---------------------------------------------------------
 import os
 import requests
 
 
+class CosmosVectorRetriever(BaseRetriever):
+    """
+    - Embeds query using Ollama
+    - Uses Cosmos VectorDistance search
+    - Returns LangChain Documents
+    """
 
+    # Declare fields so Pydantic allows them
+    container: any = Field(...)
+    embed_model: any = Field(...)
+    k: int = Field(default=4)
 
-class ClaudeLLM:
+   # trying to get rid of warning 
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
+
+    # this one works below 
+    def __init__(self, container, embed_model, k: int = 4, **kwargs):
+        # Pass fields to Pydantic BaseModel
+        super().__init__(container=container, 
+                         embed_model=embed_model,
+                        k=k,
+                        **kwargs)
+
+    def _get_relevant_documents(self, query: str): # required by baseretriever 
+        return self.get_relevant_documents(query)
+
+    def get_relevant_documents(self, query: str):
+        # Embed user query
+        query_embedding = self.embed_model.embed_query(query)
+
+        # Run Cosmos vector similarity search
+        results = self.container.query_items(
+            query="""
+            SELECT TOP @k c.id, c.content, c.citation, c.source
+            FROM c
+            ORDER BY VectorDistance(c.embedding, @vector)
+            """,
+            parameters=[
+                {"name": "@k", "value": self.k},
+                {"name": "@vector", "value": query_embedding}
+            ],
+            enable_cross_partition_query=True
+        )
+
+        # Convert results to LangChain Documents
+        documents = []
+        for item in results:
+            documents.append(
+                Document(
+                    page_content=item["content"],
+                    metadata={
+                        "citation": item.get("citation"),
+                        "source": item.get("source", "")                    }
+                )
+            )
+        return documents
+    
+async def aget_relevant_documents(self, query: str):
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.get_relevant_documents, query)
+
+class ClaudeLLM: # claude wrapper 
     def __init__(self, model, temperature=0.2, max_tokens=1024):
         self.model = model
         self.temperature = temperature
@@ -113,30 +192,20 @@ class ClaudeLLM:
         except Exception:
             return str(data)
         
-# add function to strip headers DEBUG THIS ********
 
 def main():
-    # Load DB with the same embedding model used during ingest
-    db = Chroma(
-        collection_name="new_collection",
-        persist_directory=DB_PATH,
-        embedding_function=OllamaEmbeddings(model=EMBED_MODEL), #changed 
-        client_settings=Settings(anonymized_telemetry=False)
-    )
-    # Verify database has documents
-    doc_count = db._collection.count()
-    print(f"Database contains {doc_count} documents")
+    container = get_cosmos_container() # get cosmos container 
     
-    if doc_count == 0:
-        print("WARNING: Database is empty! Make sure you've run ingest.py first.")
-        return
+    embedding_model = OllamaEmbeddings(model=EMBED_MODEL)
 
-    retriever = db.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 4}  # Retrieve top 4 most similar documents
+    # use cosmos retriever
+    retriever = CosmosVectorRetriever(
+        container=container,
+        embed_model=embedding_model,
+        k=4
     )
 
-    #llm = ChatOllama(model=LLM_MODEL, temperature=0.2) # old model 
+
     #anthropic model 
     llm = ClaudeLLM(
         model=LLM_MODEL,
@@ -144,14 +213,21 @@ def main():
         max_tokens=1024
     )
 
-    """ 
-    ideas for prompts: 
-    - previous/ original = 
-    "You are a helpful assistant. Use the provided context to answer the question.\n"
-            "If the answer is not in the context, say you don't know.\n\n"
+    '''
+    **************************
+    IMPORTANT NOTE FROM SOFIA:
+    all edits should only be made below. The output of the chatbot is a little buggy and hard to follow. 
 
-            "Context:\n{context}\n\nQuestion: {input}"
-    """
+    SOme suggestions: 
+    - The answer should be the main point, not sure that the bullets that follow are easy to interpret
+    - ALso the citations given at the bottom are incorrect
+    - We need to figure out how to cite correctly and point to the chunks that were used and where those are located
+    - metaprompt is good but could use some edits 
+
+    *************************
+    '''
+        # play with the metaprompt with new database and model !!!! 
+
     prompt = PromptTemplate(
         input_variables=["context", "input"],
         template=(
@@ -200,37 +276,25 @@ def main():
     )
 
     document_prompt = PromptTemplate(
-        input_var = ["page_content", "citation", "file_link"], 
+        input_variables = ["page_content", "citation"], 
         template= "{page_content}\n"
         "[Source: {citation}]"
     )
 
     document_chain = create_stuff_documents_chain(llm, prompt, document_prompt=document_prompt)
-    rag_chain = create_retrieval_chain(retriever, document_chain)
+    rag_chain = create_retrieval_chain(retriever, document_chain) # not changed 
 
     import sys
-   
 
-    #print("\nType your questions below. Type 'exit', 'quit', or q to stop.\n")
-    
     question = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else input("Question: ")
     question = question.strip()
-    # if question.lower() in ("exit", "quit", "q"):
-    #     print("goodbye!")
-    #     break
-    # if not question: 
-    #     continue
 
     result = rag_chain.invoke({"input": question})
 
     docs = result.get("context", []) # below prints sources 
 
     unique_files = set()
-    # for d in docs: 
-    #     citation= d.metadata.get("citation")
-    #     if citation:
-    #         unique_files.add(citation)
-    
+   
     print("\n--- Retrieved Chunks---") # citation and chunks
     for i, d in enumerate(docs, start=1):
 
