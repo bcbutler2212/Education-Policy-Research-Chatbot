@@ -7,4 +7,3 @@ langchain-classic
 chromadb
 pypdf
 langchain-anthropic
-gradio

@@ -55,8 +55,8 @@ import asyncio
 # add cosmos info below 
 COSMOS_ENDPOINT = os.getenv("COSMOS_ENDPOINT")
 COSMOS_KEY = os.getenv("COSMOS_KEY")
-DATABASE_NAME = os.getenv("COSMOS_DATABASE", "rag-db")
-CONTAINER_NAME = os.getenv("COSMOS_CONTAINER", "chunks")
+DATABASE_NAME = os.getenv("COSMOS_DATABASE")
+CONTAINER_NAME = os.getenv("COSMOS_CONTAINER")
 
 if not COSMOS_ENDPOINT or not COSMOS_KEY:
     raise ValueError("Cosmos DB credentials not set in environment variables.")
