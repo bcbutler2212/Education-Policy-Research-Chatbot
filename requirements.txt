@@ -8,3 +8,6 @@ chromadb
 pypdf
 langchain-anthropic
 gradio
+flask
+flask-cors
+azure-cosmos
