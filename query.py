@@ -49,6 +49,7 @@ from langchain_core.retrievers import BaseRetriever
 from pydantic import Field
 from typing import Any
 import asyncio
+import textwrap
 
 
 
@@ -89,7 +90,7 @@ class CosmosVectorRetriever(BaseRetriever):
     # Declare fields so Pydantic allows them
     container: any = Field(...)
     embed_model: any = Field(...)
-    k: int = Field(default=4)
+    k: int = Field(default=8)
 
    # trying to get rid of warning 
     model_config = {
@@ -202,7 +203,7 @@ def main():
     retriever = CosmosVectorRetriever(
         container=container,
         embed_model=embedding_model,
-        k=4
+        k=8 # changed k value from 4 to 8
     )
 
 
@@ -231,37 +232,42 @@ def main():
     prompt = PromptTemplate(
         input_variables=["context", "input"],
         template=(
-          """You are a specialized assistant that answers questions using ONLY the provided CONTEXT_EXCERPTS.
+          """You are a policy research assistant that answers questions using ONLY the provided CONTEXT_EXCERPTS.
+          Your purpose is to help researchers and policy creators understand infromation contained in the excerpts.
 
             Your goals:
             - Give a clear, helpful answer grounded in the excerpts.
             - Synthesize across multiple excerpts when relevant.
+            - Prefer precise wording from the excerpts when possible.
             - Be concise, accurate, and easy to read.
 
 
             Rules:
             - Do not introduce facts that are not supported by the excerpts.
-            - If the excerpts do not contain enough information, say:
-            "The provided excerpts do not contain information about: <topic>."
-            Then suggest 1–3 specific things to search for or provide next.
+            - If the excerpts do not contain enough information, explicitly say so.
             - If excerpts conflict, briefly describe the conflict and reflect both sides.
-            - Avoid long quotes. Only quote short phrases when necessary.
+
+            Handling missing information:
+            If the excerpts do not contain enough information, respond with:
+
+            "The provided excerpts do not contain sufficient information about: <topic>."
+
+            Then suggest 1–3 specific additional queries, keywords, or document types that may help answer the question.
+
+        
 
 
             Output format (always follow):
 
 
             Response
-            1–3 sentences answering the question directly.
+            1–6 sentences answering the question directly. 
 
 
             Key details
-            - 3–6 short bullets that support or expand the response.
+            - 2-3 short bullets that support or expand the response.
+            - Each bullet should reference the relevant excerpt number and the filename of that excerpt if available.
 
-
-            Sources
-            - List the exact source/citation lines that appear in the excerpts that you relied on.
-            - Do not add commentary here, just the lines.
 
 
             CONTEXT_EXCERPTS:
@@ -308,7 +314,8 @@ def main():
         print(f"\nChunk {i}:")
         print(f"File: {filename}")
         print("Content:")
-        print(d.page_content)
+        #print(d.page_content)
+        print(textwrap.fill(d.page_content, width=100))
         print("-" * 40)
     print("------------------------\n")
 
@@ -321,7 +328,9 @@ def main():
 
     answer = result.get("answer") or result.get("result") or str(result)
     print("Answer:")
-    print(answer)
+    #print(answer)
+    for p in answer.split("\n"):
+        print(textwrap.fill(p, width=100))
     print("\n")
 
 if __name__ == "__main__":
