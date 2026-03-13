@@ -75,7 +75,7 @@ DOCS_PATH = "docs"
 
 def main():
     loader = DirectoryLoader(DOCS_PATH, glob="./*.pdf",loader_cls= PyPDFLoader)
-    documents = loader.load()
+    documents = loader.load()[:1]
     print(f"Loaded {len(documents)} documents")
 
     for doc in documents:
@@ -94,9 +94,11 @@ def main():
         "? ",
         "! ",
     ]
+    
+    # edit this chunk size 2000, overlap 400
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=120,
+        chunk_size=1800,
+        chunk_overlap=300,
         separators=custom_separators,
         keep_separator=False
         )
@@ -133,33 +135,33 @@ def main():
 
 
    
-    for start in range(0, len(chunks), batch_size):
-        end = start + batch_size
-        batch = chunks[start:end]
-        # Change me below *** perhaps ??? look at documentation 
-        #db.add_documents(batch)
-        for chunk in batch:
-            embedding = embeddings.embed_query(chunk.page_content)
+    # for start in range(0, len(chunks), batch_size):
+    #     end = start + batch_size
+    #     batch = chunks[start:end]
+    #     # Change me below *** perhaps ??? look at documentation 
+    #     #db.add_documents(batch)
+    #     for chunk in batch:
+    #         embedding = embeddings.embed_query(chunk.page_content)
 
-            # this format needed for cosmos db 
-            item = {
-            "id": str(uuid.uuid4()), # unsure if I should change ids to include metadata info for citations 
-            "content": chunk.page_content,
-            "embedding": embedding,
-            "source": chunk.metadata.get("source"),
-            "citation": chunk.metadata.get("citation"),
-            "page": chunk.metadata.get("page_label")
-                }
-            container.upsert_item(item) #overwrites
+    #         # this format needed for cosmos db 
+    #         item = {
+    #         "id": str(uuid.uuid4()), # unsure if I should change ids to include metadata info for citations 
+    #         "content": chunk.page_content,
+    #         "embedding": embedding,
+    #         "source": chunk.metadata.get("source"),
+    #         "citation": chunk.metadata.get("citation"),
+    #         "page": chunk.metadata.get("page_label")
+    #             }
+    #         container.upsert_item(item) #overwrites
 
-        print(f"Upserted {min(end, len(chunks))}/{len(chunks)}")
+    #     print(f"Upserted {min(end, len(chunks))}/{len(chunks)}")
     
   
 
-    # for i, chunk in enumerate(chunks[:10]):
-    #     print(f"\n--- Chunk {i+1} ---")
-    #     print(chunk.page_content)
-    #     print("-------------------")
+    for i, chunk in enumerate(chunks[:10]):
+        print(f"\n--- Chunk {i+1} ---")
+        print(chunk.page_content)
+        print("-------------------")
 
 
 

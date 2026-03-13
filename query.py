@@ -203,7 +203,7 @@ def main():
     retriever = CosmosVectorRetriever(
         container=container,
         embed_model=embedding_model,
-        k=8 # changed k value from 4 to 8
+        k=5 # changed k value from 4 to 8
     )
 
 
@@ -244,6 +244,7 @@ def main():
 
             Rules:
             - Do not introduce facts that are not supported by the excerpts.
+            - Do not reference quotes not found in CONTEXT_EXCERPTS.
             - If the excerpts do not contain enough information, explicitly say so.
             - If excerpts conflict, briefly describe the conflict and reflect both sides.
 
@@ -261,7 +262,7 @@ def main():
 
 
             Response
-            1–6 sentences answering the question directly. 
+            No more than 7 sentences answering the question directly. 
 
 
             Key details
