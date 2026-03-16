@@ -323,7 +323,15 @@ def main():
         print("-" * 40)
     print("------------------------\n") """
 
+    for i, d in enumerate(docs, start=1):
 
+        citation= d.metadata.get("citation")
+        if citation:
+            unique_files.add(citation)
+
+        source_path = d.metadata.get("source", "")
+        filename = os.path.basename(source_path)
+        
     print("\n--- Sources Used ---")
     for filename in sorted(unique_files):
         print(filename)
