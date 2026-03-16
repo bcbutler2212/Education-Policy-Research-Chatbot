@@ -262,11 +262,12 @@ def main():
 
 
             Response
-            No more than 7 sentences answering the question directly. 
+            No more than 6 sentences answering the question directly. 
 
 
             Key details
-            - 2-3 short bullets that support or expand the response.
+            - 2-4 short bullets that support or expand the response.
+            - Use quotations from CONTEXT_EXCERPTS when useful, do not paraphrase these quotations
             - Each bullet should reference the relevant excerpt number and the filename of that excerpt if available.
 
 
@@ -302,6 +303,8 @@ def main():
 
     unique_files = set()
    
+    # ** Print chunks for testing below **
+    """ 
     print("\n--- Retrieved Chunks---") # citation and chunks
     for i, d in enumerate(docs, start=1):
 
@@ -318,7 +321,7 @@ def main():
         #print(d.page_content)
         print(textwrap.fill(d.page_content, width=100))
         print("-" * 40)
-    print("------------------------\n")
+    print("------------------------\n") """
 
 
     print("\n--- Sources Used ---")

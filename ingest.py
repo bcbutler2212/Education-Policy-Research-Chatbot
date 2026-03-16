@@ -119,44 +119,34 @@ def main():
     embeddings = OllamaEmbeddings(model="nomic-embed-text")
     
     
-    # new db here ***
-    # db = Chroma(
-    #     collection_name="new_collection",
-    #     embedding_function=embeddings,
-    #     persist_directory=DB_PATH,
-    #     client_settings=Settings(anonymized_telemetry=False)
-    # )
+   
     batch_size = 128 # 10000 previously 
 
     # cosmos db below 
-
-
     
+    for start in range(0, len(chunks), batch_size):
+        end = start + batch_size
+        batch = chunks[start:end]
+        # Change me below *** perhaps ??? look at documentation 
+        #db.add_documents(batch)
+        for chunk in batch:
+            embedding = embeddings.embed_query(chunk.page_content)
 
+            # this format needed for cosmos db 
+            item = {
+            "id": str(uuid.uuid4()), 
+            "content": chunk.page_content,
+            "embedding": embedding,
+            "source": chunk.metadata.get("source"),
+            "citation": chunk.metadata.get("citation"),
+            "page": chunk.metadata.get("page_label")
+                }
+            container.upsert_item(item) #overwrites
 
-   
-    # for start in range(0, len(chunks), batch_size):
-    #     end = start + batch_size
-    #     batch = chunks[start:end]
-    #     # Change me below *** perhaps ??? look at documentation 
-    #     #db.add_documents(batch)
-    #     for chunk in batch:
-    #         embedding = embeddings.embed_query(chunk.page_content)
-
-    #         # this format needed for cosmos db 
-    #         item = {
-    #         "id": str(uuid.uuid4()), # unsure if I should change ids to include metadata info for citations 
-    #         "content": chunk.page_content,
-    #         "embedding": embedding,
-    #         "source": chunk.metadata.get("source"),
-    #         "citation": chunk.metadata.get("citation"),
-    #         "page": chunk.metadata.get("page_label")
-    #             }
-    #         container.upsert_item(item) #overwrites
-
-    #     print(f"Upserted {min(end, len(chunks))}/{len(chunks)}")
+        print(f"Upserted {min(end, len(chunks))}/{len(chunks)}")
     
   
+    # *** Print chunks for testing below ***
 
     for i, chunk in enumerate(chunks[:10]):
         print(f"\n--- Chunk {i+1} ---")
