@@ -4,10 +4,10 @@ langchain-community
 langchain-ollama
 langchain-text-splitters
 langchain-classic 
-chromadb
 pypdf
 langchain-anthropic
-gradio
+python-dotenv
 flask
 flask-cors
 azure-cosmos
+langchain-azure-ai
