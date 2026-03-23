@@ -1,24 +1,64 @@
-<<<<<<< HEAD
-**Getting Started**
+# Education Policy Research Chatbot
 
-- We are using Docker, a service that allows us to all work from the same system environment.
-- In order to do this, first download docker onto your machine. You can either do the gui (application with graphics) or just the cli version (in terminal). I did the cli but it shouldn't make a difference
-- run this command so that you don't use sudo everytime you run docker: sudo usermod -aG docker $USER
-- then run this command: docker education-chatbot
-- when you are done with the container, grab the id of the container using docker ps -a and then copy that id and run docker stop [id]
+A RAG (Retrieval-Augmented Generation) chatbot designed to help researchers and policy creators analyze education policy documents.
 
-**Common Errors**
--If you are getting an error that says Ollama isn't running (or some variation of that), then you need to install run : ollama serve
+## 🚀 Getting Started with Docker
 
--If query.py doesn't say that there are any documents that are in the database, then you need to run "python ingest.py"
+Docker allows you to run this application in a consistent environment without manually installing all the dependencies (Python, Node.js, etc.) on your computer.
 
+### 1. Install Docker
 
-**Work Needed**
-- Proper citation for the responses --> need to know if its pulling the right text in addition to the correct documents 
-- Memory for the chatbot so that you can continue a conversation
-- Play around with chunk size to see if that changes accuracy of responses 
-- Play around with metaprompt (in query.py) to see how that changes quality of responses.
+*   **Windows & Mac:** Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+*   **Linux:** Follow the [official installation guide](https://docs.docker.com/engine/install/) for your distribution. 
 
-**Work needed 2/4**
-- include history in UI and in query
+### 2. Prepare the Environment
 
+1.  **Ollama (for Embeddings):** 
+    This app uses Ollama for text embeddings. You must have Ollama installed and running on your host machine.
+    *   Install from [ollama.com](https://ollama.com).
+    *   **Crucial:** Start Ollama so it is accessible from Docker by running:
+        ```bash
+        OLLAMA_HOST=0.0.0.0 ollama serve
+        ```
+    *   Ensure the `nomic-embed-text` model is pulled:
+        ```bash
+        ollama pull nomic-embed-text
+        ```
+
+2.  **Configuration:**
+    Create a `.env` file in the root directory with the following keys:
+    ```env
+    ANTHROPIC_API_KEY=your_key_here
+    COSMOS_ENDPOINT=your_azure_cosmos_endpoint
+    COSMOS_KEY=your_azure_cosmos_key
+    COSMOS_DATABASE=your_db_name
+    COSMOS_CONTAINER=your_container_name
+    ```
+
+### 3. Run the Application
+
+Navigate to the project folder in your terminal and run:
+
+```bash
+docker-compose up --build
+```
+
+*   **Backend:** Accessible at `http://localhost:7860`
+*   **Frontend:** Accessible at `http://localhost:5173`
+
+To stop the application, press `Ctrl+C` in the terminal or run `docker-compose down`.
+
+## 🛠 Project Structure
+
+- `UI.py`: Flask backend providing the `/chat` and `/health` endpoints.
+- `query.py`: Core RAG logic using LangChain, Claude (Anthropic), and Cosmos DB.
+- `ingest.py`: Script to process PDFs from the `docs/` folder into the vector database.
+- `frontend/`: Vite + React application for the user interface.
+
+## 📝 Ingesting Documents
+
+If the database is empty or you've added new PDFs to the `docs/` folder, run the ingestion script inside the container:
+
+```bash
+docker-compose exec app python ingest.py
+```
