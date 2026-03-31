@@ -197,7 +197,9 @@ class ClaudeLLM: # claude wrapper
 def main():
     container = get_cosmos_container() # get cosmos container 
     
-    embedding_model = OllamaEmbeddings(model=EMBED_MODEL)
+    embedding_model = OllamaEmbeddings(model=EMBED_MODEL,
+                                       base_url=os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434")
+                                       )
 
     # use cosmos retriever
     retriever = CosmosVectorRetriever(
