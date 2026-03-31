@@ -331,7 +331,7 @@ def main():
 
         source_path = d.metadata.get("source", "")
         filename = os.path.basename(source_path)
-        
+
     print("\n--- Sources Used ---")
     for filename in sorted(unique_files):
         print(filename)
@@ -340,10 +340,10 @@ def main():
 
     answer = result.get("answer") or result.get("result") or str(result)
     print("Answer:")
-    #print(answer)
-    for p in answer.split("\n"):
-        print(textwrap.fill(p, width=100))
-    print("\n")
+    print(answer)
+    # for p in answer.split("\n"):
+    #     print(textwrap.fill(p, width=100))
+    # print("\n")
 
 if __name__ == "__main__":
     main()
