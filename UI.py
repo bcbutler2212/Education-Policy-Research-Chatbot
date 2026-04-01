@@ -39,7 +39,7 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import query
+from src import query
 import sys
 import io
 import contextlib
