@@ -285,6 +285,7 @@ export default function App() {
               }}
             >
               <div
+                className="chat-scroll-area"
                 style={{
                   flex: 1,
                   overflowY: "auto",
