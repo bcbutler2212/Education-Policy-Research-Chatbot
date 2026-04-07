@@ -41,3 +41,17 @@ body {
 .chat-scroll-area::-webkit-scrollbar-thumb:hover {
   background: #b8c6e3;
 }
+
+/* Citation link styles */
+a {
+  color: #0865DE;
+  text-decoration: none;
+  border-bottom: 1px solid #0865DE;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  color: #2e67d5;
+  border-bottom-color: #2e67d5;
+  background-color: rgba(8, 101, 222, 0.05);
+}

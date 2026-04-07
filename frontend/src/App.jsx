@@ -341,8 +341,13 @@ export default function App() {
                             lineHeight: 1.6,
                             whiteSpace: "pre-wrap"
                           }}
+                          dangerouslySetInnerHTML={
+                            message.role === "assistant"
+                              ? { __html: message.content }
+                              : undefined
+                          }
                         >
-                          {message.content}
+                          {message.role === "user" ? message.content : null}
                         </div>
                       </div>
                     ))}

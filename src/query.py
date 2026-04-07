@@ -42,6 +42,7 @@ from langchain_core.prompts import PromptTemplate # charlie
 from langchain_classic.chains import create_retrieval_chain # charlie
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain # charlie
 from azure.cosmos import CosmosClient
+from src.services.citation_service import CitationService
 
 
 from langchain_core.documents import Document
@@ -334,15 +335,14 @@ def main():
         source_path = d.metadata.get("source", "")
         filename = os.path.basename(source_path)
 
-    print("\n--- Sources Used ---")
-    for filename in sorted(unique_files):
-        print(filename)
-        print()
-    print("--------------------\n")
+    # Create citation service and format clickable citations
+    citation_service = CitationService()
+    citations = citation_service.extract_citations_from_documents(docs)
+    formatted_citations = citation_service.format_citations_for_response(citations)
 
     answer = result.get("answer") or result.get("result") or str(result)
     print("Answer:")
-    print(answer)
+    print(answer + formatted_citations)
     # for p in answer.split("\n"):
     #     print(textwrap.fill(p, width=100))
     # print("\n")
