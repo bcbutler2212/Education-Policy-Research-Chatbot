@@ -42,7 +42,7 @@ body {
   background: #b8c6e3;
 }
 
-/* Citation link styles */
+/* Markdown styles */
 a {
   color: #0865DE;
   text-decoration: none;
@@ -54,4 +54,107 @@ a:hover {
   color: #2e67d5;
   border-bottom-color: #2e67d5;
   background-color: rgba(8, 101, 222, 0.05);
+}
+
+/* Markdown headings - compact for half-screen */
+h1, h2, h3, h4, h5, h6 {
+  margin: 12px 0 6px 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 { font-size: 1.2em; }
+h2 { font-size: 1.1em; }
+h3 { font-size: 1.05em; }
+
+/* Markdown lists - compact for half-screen layout */
+ul, ol {
+  margin: 6px 0;
+  padding-left: 16px;
+}
+
+ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+ul li {
+  margin: 3px 0;
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.4;
+}
+
+ul li::before {
+  content: "•";
+  color: #0865DE;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+ol {
+  padding-left: 16px;
+}
+
+ol li {
+  margin: 3px 0;
+  line-height: 1.4;
+}
+
+/* Markdown paragraphs - compact */
+p {
+  margin: 6px 0;
+  line-height: 1.5;
+}
+
+/* Markdown code */
+code {
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+/* Markdown blockquotes */
+blockquote {
+  border-left: 3px solid #0865DE;
+  padding-left: 12px;
+  margin: 6px 0;
+  color: #5f6f94;
+  font-style: italic;
+}
+
+/* Sources section styling */
+strong:has-text("📚 Sources:"),
+strong:contains("Sources:") {
+  color: #0865DE;
+  font-size: 0.95em;
+  display: block;
+  margin: 8px 0 4px 0;
+  border-bottom: 1px solid rgba(8, 101, 222, 0.2);
+  padding-bottom: 2px;
+}
+
+/* Citation links in compact space */
+p:has(a[href*="/pdfs/"]) {
+  margin: 2px 0;
+}
+
+/* Better link styling for citations */
+a[href*="/pdfs/"] {
+  font-size: 0.9em;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background-color: rgba(8, 101, 222, 0.03);
+  border: 1px solid rgba(8, 101, 222, 0.1);
+  transition: all 0.2s ease;
+}
+
+a[href*="/pdfs/"]:hover {
+  background-color: rgba(8, 101, 222, 0.08);
+  border-color: rgba(8, 101, 222, 0.3);
+  transform: translateY(-1px);
 }

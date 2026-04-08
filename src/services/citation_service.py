@@ -74,11 +74,11 @@ class CitationService:
         return f"{self.base_pdf_url}/{encoded_filename}"
 
     def _create_clickable_link(self, filename: str) -> str:
-        """Create HTML clickable link for the PDF."""
+        """Create markdown clickable link for the PDF."""
         pdf_url = self._generate_pdf_url(filename)
         display_name = self._format_display_name(filename)
 
-        return f'<a href="{pdf_url}" target="_blank" rel="noopener noreferrer">{display_name}</a>'
+        return f'[{display_name}]({pdf_url})'
 
     def format_citations_for_response(self, citations: List[Dict[str, Any]]) -> str:
         """Format citations for display in chatbot response."""
@@ -87,7 +87,7 @@ class CitationService:
 
         citation_links = []
         for citation in citations:
-            citation_links.append(f"• {citation['clickable_link']}")
+            citation_links.append(f"- {citation['clickable_link']}")
 
         formatted_citations = "\n".join(citation_links)
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Markdown from "react-markdown";
 
 export default function App() {
   const [search, setSearch] = useState("");
@@ -339,15 +340,29 @@ export default function App() {
                             maxWidth: message.role === "user" ? "60%" : "82%",
                             color: "#1f2a44",
                             lineHeight: 1.6,
-                            whiteSpace: "pre-wrap"
+                            whiteSpace: message.role === "user" ? "pre-wrap" : "normal"
                           }}
-                          dangerouslySetInnerHTML={
-                            message.role === "assistant"
-                              ? { __html: message.content }
-                              : undefined
-                          }
                         >
-                          {message.role === "user" ? message.content : null}
+                          {message.role === "assistant" ? (
+                            <Markdown
+                              components={{
+                                a: ({ href, children, ...props }) => (
+                                  <a
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    {...props}
+                                  >
+                                    {children}
+                                  </a>
+                                )
+                              }}
+                            >
+                              {message.content}
+                            </Markdown>
+                          ) : (
+                            message.content
+                          )}
                         </div>
                       </div>
                     ))}
