@@ -10,7 +10,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const API_BASE_URL = "http://127.0.0.1:7860";
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   const handbookUrl = submittedSearch
     ? `https://livehandbook.org/search/?search=${encodeURIComponent(submittedSearch)}`

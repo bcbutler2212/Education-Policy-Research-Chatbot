@@ -13,6 +13,8 @@ print("------------------")
 '''
 from __future__ import annotations
 
+
+
 try:
     __import__('pysqlite3')
     import sys
@@ -58,6 +60,7 @@ COSMOS_ENDPOINT = os.getenv("COSMOS_ENDPOINT")
 COSMOS_KEY = os.getenv("COSMOS_KEY")
 DATABASE_NAME = os.getenv("COSMOS_DATABASE")
 CONTAINER_NAME = os.getenv("COSMOS_CONTAINER")
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "https://ollama-server.politeglacier-cb73354c.eastus.azurecontainerapps.io")
 
 if not COSMOS_ENDPOINT or not COSMOS_KEY:
     raise ValueError("Cosmos DB credentials not set in environment variables.")
@@ -198,7 +201,7 @@ def main():
     container = get_cosmos_container() # get cosmos container 
     
     embedding_model = OllamaEmbeddings(model=EMBED_MODEL,
-                                       base_url=os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434")
+                                       base_url=OLLAMA_HOST
                                        )
 
     # use cosmos retriever

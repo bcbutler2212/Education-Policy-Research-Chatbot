@@ -2,7 +2,7 @@
 
 A RAG (Retrieval-Augmented Generation) chatbot designed to help researchers and policy creators analyze education policy documents.
 
-## 🚀 Getting Started with Docker
+## Prerequisites
 
 Docker allows you to run this application in a consistent environment without manually installing all the dependencies (Python, Node.js, etc.) on your computer.
 
@@ -11,54 +11,82 @@ Docker allows you to run this application in a consistent environment without ma
 *   **Windows & Mac:** Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 *   **Linux:** Follow the [official installation guide](https://docs.docker.com/engine/install/) for your distribution. 
 
-### 2. Prepare the Environment
+### 2. Install Azure CLI
+* Login: run 'az login' in terminal 
+* Ensure that you have the following: 
+    - A resource group
+    - An Azure Container Registry (ACR)
 
-1.  **Ollama (for Embeddings):** 
-    This app uses Ollama for text embeddings. You must have Ollama installed and running on your host machine.
-    *   Install from [ollama.com](https://ollama.com).
-    *   **Crucial:** Start Ollama so it is accessible from Docker by running:
-        ```bash
-        OLLAMA_HOST=0.0.0.0 ollama serve
-        ```
-    *   Ensure the `nomic-embed-text` model is pulled:
-        ```bash
-        ollama pull nomic-embed-text
-        ```
 
-2.  **Configuration:**
-    Create a `.env` file in the root directory with the following keys:
-    ```env
-    ANTHROPIC_API_KEY=your_key_here
-    COSMOS_ENDPOINT=your_azure_cosmos_endpoint
-    COSMOS_KEY=your_azure_cosmos_key
-    COSMOS_DATABASE=your_db_name
-    COSMOS_CONTAINER=your_container_name
-    ```
+### Step 1: Build & Push Images to ACR
+* Authenticate: 
+    - 'az acr login --name ACR_NAME_HERE
+* Build front and backend images, tag it, push to ACR (you will have to do this multiple times because the source URL needs to be changed once you make the container to call the right location)
+    - docker-compose up --build
+    - docker tag <local-image>:<tag> ACR_NAME_HERE.azurecr.io/<repository>:<tag>
+    - docker push ACR_NAME_HERE.azurecr.io/<repository>:<tag>
 
-### 3. Run the Application
+### Step 2: Create the Container Apps Environment
+This can be done on the Azure website or by running the following 
 
-Navigate to the project folder in your terminal and run:
+az containerapp env create \
+  --name my-album-env \
+  --resource-group <rg> \
+  --logs-workspace-id <workspace-id> \
+  --logs-workspace-key <workspace-key>
 
-```bash
-docker-compose up --build
-```
+This environment provides networking, logging, and shared infrastructure for all three apps.
 
-*   **Backend:** Accessible at `http://localhost:7860`
-*   **Frontend:** Accessible at `http://localhost:5173`
+### Step 3: Make container apps
+* I found the easiest way to do this was through the azure portal --> new resource --> container app
+* Make sure that the subscription, resource group, and environment are all accurate
+* Name the app
+* For ollama container --> 
+    - image source should be docker hub
+    - image type private
+    - Registry login server: docker.io
+    - image and tag: ollama/ollama:latest
+    - command override: ollama
+    - Arguments override: serve
+    - CPU and memory:  0.5 CPU cores, 1Gi memory
+* For Backend container
+    - image source: Azure container registry
+    - Registry: ACR_NAME_HERE.azurecr.io
+    - Location: East US
+    - image: the image you want to use
+    - version: the version you want to use 
+    - environment variables: 
+        ANTHROPIC_API_KEY=your_key_here
+        COSMOS_ENDPOINT=your_azure_cosmos_endpoint
+        COSMOS_KEY=your_azure_cosmos_key
+        COSMOS_DATABASE=your_db_name
+        COSMOS_CONTAINER=your_container_name
+        OLLAMA_HOST= link provided when you make the ollama container 
+* For frontend container
+    - image source: Azure container registry
+    - Registry: ACR_NAME_HERE.azurecr.io
+    - Location: East US
+    - image: the image you want to use
+    - version: the version you want to use 
+    - environment variables: 
+        VITE_API_URL = link to backend container 
 
-To stop the application, press `Ctrl+C` in the terminal or run `docker-compose down`.
+***The target ports should be as follows***
+    - Ollama-server: 11434
+    - Backend: 7860
+    - Frontend: 5173
 
-## 🛠 Project Structure
+***The only container that needs to be open to public is the frontend***
 
-- `UI.py`: Flask backend providing the `/chat` and `/health` endpoints.
-- `query.py`: Core RAG logic using LangChain, Claude (Anthropic), and Cosmos DB.
-- `ingest.py`: Script to process PDFs from the `docs/` folder into the vector database.
-- `frontend/`: Vite + React application for the user interface.
+Deploy!!!
 
-## 📝 Ingesting Documents
+### Step 4: pull embedding model
+* navigate to the ollama container app
+* Go to consola under monitoring
+* run command: ollama pull nomic-embed-text
 
-If the database is empty or you've added new PDFs to the `docs/` folder, run the ingestion script inside the container:
+### Step 5: Increase minimum replicas
+* navigate to scale under Application 
+* change min replicas to 1
 
-```bash
-docker-compose exec app python ingest.py
-```
+It is likely that you will not get it right first try. Make sure that all of the links and ports are correct in your code. Some of the locations of URLs are in dockerfiles, docker-compose, .env, query.py, and vite.config.js
