@@ -19,6 +19,7 @@ services:
   frontend:
     build: 
       context: ./frontend
+      dockerfile: Dockerfile
       args:
         VITE_API_URL: https://edu-backend.politeglacier-cb73354c.eastus.azurecontainerapps.io
     ports:
