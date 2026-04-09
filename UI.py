@@ -40,6 +40,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from src import query
+from src.services.pdf_service import pdf_service
 import sys
 import io
 import contextlib
@@ -84,6 +85,19 @@ def chat():
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"})
+
+
+@app.route("/pdfs/<filename>", methods=["GET"])
+def serve_pdf(filename):
+    """Serve PDF files from the docs directory."""
+    return pdf_service.serve_pdf(filename)
+
+
+@app.route("/pdfs", methods=["GET"])
+def list_pdfs():
+    """List available PDF files."""
+    pdfs = pdf_service.list_available_pdfs()
+    return jsonify({"pdfs": pdfs})
 
 
 if __name__ == "__main__":
