@@ -56,12 +56,12 @@ This environment provides networking, logging, and shared infrastructure for all
     - image: the image you want to use
     - version: the version you want to use 
     - environment variables: 
-        ANTHROPIC_API_KEY=your_key_here
-        COSMOS_ENDPOINT=your_azure_cosmos_endpoint
-        COSMOS_KEY=your_azure_cosmos_key
-        COSMOS_DATABASE=your_db_name
-        COSMOS_CONTAINER=your_container_name
-        OLLAMA_HOST= link provided when you make the ollama container 
+        - ANTHROPIC_API_KEY=your_key_here
+        - COSMOS_ENDPOINT=your_azure_cosmos_endpoint
+        - COSMOS_KEY=your_azure_cosmos_key
+        - COSMOS_DATABASE=your_db_name
+        - COSMOS_CONTAINER=your_container_name
+        - OLLAMA_HOST= link provided when you make the ollama container 
 * For frontend container
     - image source: Azure container registry
     - Registry: ACR_NAME_HERE.azurecr.io
