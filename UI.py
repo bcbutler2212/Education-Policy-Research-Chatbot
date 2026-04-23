@@ -87,7 +87,8 @@ def health():
     return jsonify({"status": "ok"})
 
 
-@app.route("/pdfs/<filename>", methods=["GET"])
+#@app.route("/pdfs/<filename>", methods=["GET"])
+@app.route("/pdfs/<path:filename>", methods=["GET"])
 def serve_pdf(filename):
     """Serve PDF files from the docs directory."""
     return pdf_service.serve_pdf(filename)

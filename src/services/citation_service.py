@@ -29,16 +29,15 @@ class CitationService:
 
     def _get_base_pdf_url(self) -> str:
         """Get the base URL for PDF files based on environment."""
-        if self.environment == 'azure':
-            # Use Azure container app URL or custom PDF base URL
-            base_url = os.getenv('AZURE_PDF_BASE_URL') or os.getenv('WEBSITE_HOSTNAME', 'https://your-azure-app.azurecontainerapps.io')
-            if not base_url.startswith('http'):
-                base_url = f"https://{base_url}"
-            return f"{base_url}/pdfs"
-        else:
-            # Local development - serve from backend
-            backend_url = os.getenv('BACKEND_URL', 'http://localhost:7860')
-            return f"{backend_url}/pdfs"
+        
+         # Use Azure container app URL or custom PDF base URL
+        base_url = os.getenv('AZURE_PDF_BASE_URL', 'https://edu-backend.politeglacier-cb73354c.eastus.azurecontainerapps.io')
+        
+        if not base_url.startswith('http'):
+            base_url = f"https://{base_url}"
+        #return f"{base_url}/pdfs"
+        return f"{base_url}/pdfs"
+       
 
     def extract_citations_from_documents(self, documents: List[Any]) -> List[Dict[str, Any]]:
         """Extract citation metadata from retrieved documents."""
@@ -72,6 +71,8 @@ class CitationService:
         """Generate the appropriate PDF URL based on environment."""
         encoded_filename = quote(filename)
         return f"{self.base_pdf_url}/{encoded_filename}"
+        
+        
 
     def _create_clickable_link(self, filename: str) -> str:
         """Create markdown clickable link for the PDF."""

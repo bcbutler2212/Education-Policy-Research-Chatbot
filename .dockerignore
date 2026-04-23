@@ -3,4 +3,4 @@ sofia/
 __pycache__/
 .git/
 db/
-docs/
+node_modules
